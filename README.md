@@ -468,3 +468,461 @@ The project can be further improved by:
 
 B.Sc. Data Science
 Interested in Data Analytics, Machine Learning, and Data-driven Applications.
+
+
+**PROJECT - 3: Weather Prediction & Temperature Forecasting**
+
+##  Project Overview
+
+This project is a **Machine Learning and Deep Learning-based weather prediction system** that performs two major tasks: **weather condition classification** and **future temperature forecasting**.
+
+The first part uses historical weather data and machine-learning algorithms such as **XGBoost, LightGBM, and Random Forest** to classify weather conditions into categories such as **Clear/Other, Cloudy, and Foggy**. The second part uses an **LSTM (Long Short-Term Memory) neural network** to forecast future temperature based on the previous **24 hours of temperature data**.
+
+The project includes data preprocessing, feature engineering, class balancing using **SMOTE**, model comparison, hyperparameter tuning, model evaluation, feature-importance analysis, and model saving for future use.
+
+---
+
+##  Objectives
+
+* Analyze historical weather data.
+* Clean and preprocess weather observations.
+* Extract useful time-based features from date and time information.
+* Classify weather conditions using machine-learning models.
+* Compare XGBoost, LightGBM, and Random Forest performance.
+* Handle class imbalance using SMOTE.
+* Optimize the XGBoost model using GridSearchCV.
+* Forecast future temperature using an LSTM neural network.
+* Evaluate classification and forecasting performance using appropriate metrics.
+* Save trained models and preprocessing objects for future predictions.
+
+---
+
+##  Dataset
+
+The project uses a historical weather dataset named:
+
+```text
+weatherHistory.csv
+```
+
+The dataset contains weather observations with variables such as:
+
+* Formatted Date
+* Temperature
+* Apparent Temperature
+* Weather Summary
+* Other weather-related measurements
+
+The date information is converted into useful temporal features including:
+
+* Month
+* Day
+* Hour
+* Time of Day
+
+The project also creates a new `temp_diff` feature representing the difference between actual and apparent temperature.
+
+---
+
+#  Part 1: Weather Condition Classification
+
+## Data Preprocessing
+
+Several preprocessing steps were performed before training the classification models.
+
+### Date-Time Feature Engineering
+
+The `Formatted Date` column is converted into a datetime format and separated into:
+
+```text
+Month
+Day
+Hour
+TimeOfDay
+```
+
+The time of day is categorized into:
+
+```text
+Night
+Morning
+Afternoon
+Evening
+```
+
+This allows the models to capture possible relationships between weather conditions and different times of the day.
+
+### Temperature Feature
+
+A new feature called `temp_diff` is created:
+
+```text
+Temperature - Apparent Temperature
+```
+
+This represents the difference between the measured temperature and how the temperature feels.
+
+### Data Cleaning
+
+Unnecessary columns such as:
+
+```text
+Loud Cover
+Daily Summary
+```
+
+are removed.
+
+Missing values are handled using forward filling followed by removal of any remaining missing records.
+
+---
+
+## Weather Classification
+
+The original weather summary is simplified into broader categories.
+
+The classification logic groups weather descriptions into categories such as:
+
+```text
+Rainy
+Snowy
+Foggy
+Cloudy
+Windy
+Dry
+Humid
+Clear/Other
+```
+
+The resulting target variable is encoded numerically using `LabelEncoder`.
+
+This transforms the weather prediction task into a **multi-class classification problem**.
+
+---
+
+##  Feature Preparation
+
+Categorical features are converted into numerical representations using **one-hot encoding**.
+
+Numerical features are standardized using:
+
+```python
+StandardScaler()
+```
+
+Rare target classes containing fewer than six observations are filtered before applying SMOTE.
+
+### SMOTE
+
+**Synthetic Minority Over-sampling Technique (SMOTE)** is used to balance the remaining classes.
+
+This helps prevent the classification model from being overly influenced by classes with more observations.
+
+---
+
+#  Machine Learning Models
+
+Three classification algorithms were evaluated:
+
+### 1. XGBoost
+
+XGBoost was used as the primary model and subsequently optimized through hyperparameter tuning.
+
+### 2. LightGBM
+
+LightGBM was used as another gradient-boosting approach for comparison.
+
+### 3. Random Forest
+
+An optimized Random Forest model was also evaluated.
+
+The models were evaluated using **TimeSeriesSplit cross-validation**, which preserves temporal ordering during validation.
+
+---
+
+##  Model Comparison
+
+The TimeSeriesSplit cross-validation results reported in the notebook were:
+
+| Model         | Mean CV Accuracy |
+| ------------- | ---------------: |
+| XGBoost       |           89.44% |
+| LightGBM      |           89.39% |
+| Random Forest |           78.41% |
+
+The corresponding standard deviations were approximately **10.15%, 10.25%, and 19.46%**, respectively.
+
+---
+
+#  XGBoost Hyperparameter Tuning
+
+GridSearchCV was used to optimize the XGBoost model.
+
+The parameters explored included:
+
+```text
+n_estimators
+max_depth
+learning_rate
+subsample
+```
+
+The best parameters obtained were:
+
+```text
+n_estimators = 200
+max_depth = 6
+learning_rate = 0.1
+subsample = 0.7
+```
+
+The optimized model achieved a **test accuracy of approximately 95.33%** on the reported test set.
+
+### Classification Performance
+
+The reported test results were:
+
+| Weather Class | Precision | Recall | F1-Score |
+| ------------- | --------: | -----: | -------: |
+| Clear/Other   |      0.94 |   0.92 |     0.93 |
+| Cloudy        |      0.92 |   0.94 |     0.93 |
+| Foggy         |      1.00 |   1.00 |     1.00 |
+
+Overall test accuracy:
+
+**95.33%**
+
+---
+
+# Part 2: LSTM Temperature Forecasting
+
+The second component of the project focuses on **time-series temperature forecasting**.
+
+Instead of classifying weather conditions, an LSTM neural network is used to predict future temperature values.
+
+## Why LSTM?
+
+LSTM networks are designed to work with sequential data and can learn patterns from previous observations.
+
+In this project, the model uses the **previous 24 hours of temperature data to predict the temperature for the next hour**.
+
+---
+
+## LSTM Data Preparation
+
+The temperature values are first normalized to the range:
+
+```text
+0 to 1
+```
+
+using `MinMaxScaler`.
+
+Sequences are then generated using a window of:
+
+```text
+24 hours
+```
+
+For example:
+
+```text
+Previous 24 hours → Next hour temperature
+```
+
+The data is split chronologically into training and testing sets without shuffling, which is appropriate for time-series forecasting.
+
+---
+
+## LSTM Architecture
+
+The LSTM model consists of:
+
+```text
+Input
+  ↓
+LSTM Layer – 50 units
+  ↓
+Dense Layer – 1 output
+```
+
+The model uses:
+
+```text
+Optimizer: Adam
+Loss Function: Mean Squared Error (MSE)
+Epochs: 10
+Batch Size: 32
+```
+
+The model is trained using historical temperature sequences.
+
+---
+
+# LSTM Results
+
+The training loss decreased throughout the 10 training epochs.
+
+The final reported validation loss was approximately:
+
+```text
+0.000707
+```
+
+The model was then evaluated on the test sequence.
+
+### Temperature Forecasting RMSE
+
+The reported Root Mean Squared Error was:
+
+**1.537°C**
+
+The project also generates a visualization comparing:
+
+```text
+Actual Temperature
+vs
+Predicted Temperature
+```
+
+to visually assess the forecasting performance.
+
+---
+
+# Model Saving
+
+The trained models and preprocessing components are saved for future use.
+
+### Classification
+
+```text
+weather_model.pkl
+weather_label_encoder.pkl
+```
+
+### Temperature Forecasting
+
+```text
+lstm_temperature_model.h5
+temp_scaler.pkl
+```
+
+The notebook confirms that both the classification model and encoder, as well as the LSTM model and scaler, were saved successfully.
+
+---
+
+# Overall Project Workflow
+
+```text
+Historical Weather Data
+        ↓
+Data Cleaning
+        ↓
+Feature Engineering
+        ↓
+Time-Based Features
+        ↓
+Temperature Difference
+        ↓
+        ┌───────────────────────┐
+        │                       │
+        ↓                       ↓
+Weather Classification     Temperature Forecasting
+        ↓                       ↓
+SMOTE Balancing             24-Hour Sequences
+        ↓                       ↓
+XGBoost / LightGBM / RF      LSTM Neural Network
+        ↓                       ↓
+Hyperparameter Tuning        Temperature Prediction
+        ↓                       ↓
+Weather Classification       RMSE Evaluation
+        │                       │
+        └───────────┬───────────┘
+                    ↓
+             Model Evaluation
+                    ↓
+             Save Trained Models
+```
+
+---
+
+# Technologies Used
+
+```text
+Python
+Pandas
+NumPy
+Matplotlib
+Seaborn
+Scikit-learn
+XGBoost
+LightGBM
+TensorFlow / Keras
+Imbalanced-learn
+Joblib
+```
+
+---
+
+#  Project Structure
+
+```text
+Weather-Prediction/
+│
+├── weather_prediction.ipynb
+├── weatherHistory.csv
+│
+├── weather_model.pkl
+├── weather_label_encoder.pkl
+│
+├── lstm_temperature_model.h5
+├── temp_scaler.pkl
+│
+├── confusion_matrix.png
+├── feature_importance.png
+└── README.md
+```
+
+---
+
+# Key Highlights
+
+* Built a **multi-class weather classification system**.
+* Compared **XGBoost, LightGBM, and Random Forest**.
+* Used **SMOTE** to address class imbalance.
+* Applied **TimeSeriesSplit** for temporal cross-validation.
+* Performed **XGBoost hyperparameter tuning** using GridSearchCV.
+* Achieved **95.33% reported test accuracy** for the optimized classification model.
+* Developed an **LSTM-based temperature forecasting model**.
+* Used the previous **24 hours to predict the next hour's temperature**.
+* Achieved a reported **1.537°C RMSE** for temperature forecasting.
+* Saved trained models and preprocessing objects for future applications.
+
+---
+
+# Limitations
+
+This project is intended as a machine-learning and deep-learning demonstration. Weather prediction is affected by many complex environmental factors, and model performance can vary depending on the dataset, geographical region, time period, and forecasting horizon.
+
+The reported results are specific to the dataset and evaluation procedure used in this notebook and should not be interpreted as guaranteed real-world weather forecasts.
+
+---
+
+# Future Improvements
+
+* Develop a Streamlit dashboard for real-time predictions.
+* Incorporate additional meteorological variables.
+* Add live weather API integration.
+* Perform longer-horizon temperature forecasting.
+* Experiment with GRU and Transformer-based time-series models.
+* Add automated model retraining.
+* Deploy the trained models as an API.
+* Provide location-specific weather predictions.
+
+## Author
+
+**Dhanasree Rajasekaran**
+
+B.Sc. Data Science
+Interested in Data Analytics, Machine Learning, Deep Learning, and Data-driven Applications.
+
